@@ -1,0 +1,13 @@
+#pragma once
+
+#cmakedefine01 TARGET_ARCH_ARM64
+#cmakedefine01 TARGET_ARCH_X64
+
+#cmakedefine01 TARGET_ARCH_64
+#cmakedefine01 TARGET_ARCH_32
+
+#define GIT_COMMIT "@GIT_COMMIT_HASH_SHORT@"
+#define TARGET_ARCH "@TARGET_ARCH@"
+#define DUMMY_OPTION
+
+#include "config_@TARGET_ARCH@.h"
