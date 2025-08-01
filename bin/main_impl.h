@@ -2,7 +2,5 @@
 
 namespace blaze
 {
-
-    void main(int argc, char *argv[]);
-
+    void main(void *);
 } // namespace os

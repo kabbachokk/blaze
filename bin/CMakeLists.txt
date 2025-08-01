@@ -12,10 +12,12 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -T ${CMAKE_CURRENT_SOURCE_
 
 #add_library(blaze_objects OBJECT ${BIN_SOURCES})
 
-add_executable(blaze
+add_executable(blaze 
     start_arm64.S
     main.cc
     main_arm64.cc
+    debug.cc
+    #$<TARGET_OBJECTS:blaze_lib>
 )
 set_target_properties(blaze PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${LINKER_SCRIPT})
 #target_link_options(blaze PRIVATE "-T${CMAKE_CURRENT_SOURCE_DIR}/${LINKER_SCRIPT}")

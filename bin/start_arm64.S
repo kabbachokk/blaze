@@ -1,32 +1,8 @@
     /* aarch64 startup code */
 
-.extern main
-.extern _sbss
-.extern _ebss
-.extern _sstack
-.extern _estack
-
-#ifdef __ILP32__
-#define PTR_REG(n)	w##n
-#define PTR_SIZE	4
-#define PTR_LOG_SIZE	2
-#else
-#define PTR_REG(n)	x##n
-#define PTR_SIZE	8
-#define PTR_LOG_SIZE	3
-#endif
-
-.macro func name
-    .global \name 
-    .type \name,STT_FUNC 
-\name:
-.endm
-
-/*  TODO: :lo12: and bare syntax for adrp is also the ELF/Linux way of writing it. 
-On Apple it's
-adrp xD, label@PAGE
-add xD, xD, label@PAGEOFF
-*/
+    /* TODO: :lo12: and bare syntax for adrp is also the ELF/Linux way of writing it. On Apple it's */
+    /* adrp \reg, \symbol @PAGE */
+    /* add \reg, \reg, \symbol @PAGEOFF */
 .macro adrl reg, symbol
     adrp \reg, \symbol 
     add  \reg, \reg, :lo12:\symbol 
@@ -34,14 +10,13 @@ add xD, xD, label@PAGEOFF
 
     .text
     .align 2
-func _mainCRTStartup
-func _start
-func start
+    .global _start
+    .type _start,STT_FUNC 
+_start:
     msr		DAIFSet, 0xf
 
-    /* Save command line descriptor for later use. 
-    mov 	x8, x0*/
-    adrl x8, .Lcmdline_test
+    /* Save dtb for later*/
+    mov x20, x0
 
     /* Setup stack pointer */
     adrl 	x0, _estack
@@ -62,67 +37,12 @@ func start
     adrl x2, .Learly_vectors
     msr vbar_el1, x2
 
-    /* Fetch and parse the command line.  */
-	mov	x0, #0		/* argc */
-	mov	x1, sp		/* argv */
-
-	/* Put NULL at end of argv array.  */
-	str	PTR_REG (0), [x1, #-PTR_SIZE]!
-
-	/* Skip leading blanks.  */
-.Lnext: 
-    ldrb w3, [x8], #1
-	cbz	w3, .Lendstr
-	cmp	w3, #' '
-	b.eq	.Lnext
-
-	mov	w4, #' '	/* Terminator is space.  */
-
-	/* See whether we are scanning a quoted string by checking for
-	   opening quote (" or ').  */
-	subs	w9, w3, #'\"'
-	sub	x8, x8, #1	/* Backup if no match.  */
-	ccmp	w9, #('\'' - '\"'), 0x4 /* FLG_Z */, ne
-	csel	w4, w3, w4, eq	/* Terminator = quote if match.  */
-	cinc	x8, x8, eq
-
-	/* Push arg pointer to argv, and bump argc.  */
-	str	PTR_REG (8), [x1, #-PTR_SIZE]!
-	add	x0, x0, #1
-
-	/* Find end of arg string.  */
-1:	ldrb	w3, [x8], #1
-	cbz	w3, .Lendstr
-	cmp	w4, w3		/* Reached terminator?  */
-	b.ne	1b
-
-	/* Terminate the arg string with NUL char.  */
-	mov	w4, #0
-	strb	w4, [x8, #-1]
-	b	.Lnext
-
-	/* Reverse argv array.  */
-.Lendstr:
-	add	x3, x1, #0			/* sp = &argv[0] */
-	add	x4, x1, w0, uxtw #PTR_LOG_SIZE	/* ep = &argv[argc] */
-	cmp	x4, x3
-	b.lo	2f
-1:	ldr	PTR_REG (5), [x4, #-PTR_SIZE]	/* PTR_REG (5) = ep[-1] */
-	ldr	PTR_REG (6), [x3]		/* PTR_REG (6) = *sp */
-	str	PTR_REG (6), [x4, #-PTR_SIZE]!	/* *--ep = PTR_REG (6) */
-	str	PTR_REG (5), [x3], #PTR_SIZE	/* *sp++ = PTR_REG (5) */
-	cmp	x4, x3
-	b.hi	1b
-2:
-	/* Move sp to the 16B boundary below argv.  */
-	and	x4, x1, #~0xF
-	mov	sp, x4
-
-	/*adrl x3, main
+    mov x0, x20 /* dtb */
+	/*adrl x3, _main
     b   x3   noret */
-    b   main
+    b   _main
 
-/* Exception vector entries */
+    /* Exception vector entries */
 sp0_sync:
 sp0_irq:
 sp0_fiq:
@@ -166,7 +86,9 @@ a32_serror:
     vector_entry a32_fiq
     vector_entry a32_serror
 
-.section .rodata
-.align 3
-.Lcmdline_test:
-.asciz "serial1:115200n8 arg1 'arg2'"
+    /* void _main(void*) */
+.extern _main
+.extern _sbss
+.extern _ebss
+.extern _sstack
+.extern _estack

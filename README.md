@@ -21,6 +21,7 @@ The goal of release 0.1 is to have a working aarch64 microkernel that manages in
   - [x] build environment
   - [ ] \(Optional) ci/cd
 - [x] arch startup
+- [x] debug
 - [ ] memory
 - [ ] clock
 - [ ] timer

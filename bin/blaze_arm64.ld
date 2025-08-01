@@ -12,8 +12,6 @@ SECTIONS
     {
         *(.text*)
         *(.rodata*)
-        *(.glue_7)
-        *(.glue_7t)
         _etext = .; /* конец кода */
     } > RAM
 
@@ -37,7 +35,7 @@ SECTIONS
     .stack (NOLOAD) :
     {
         _sstack = .;
-        . = . + 0x2000;
+        . = . + 0x4000;
         _estack = .;
     } > RAM
 }
